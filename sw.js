@@ -6,7 +6,7 @@
 // never changes. (Replace a photograph under the same name — the landing's
 // landing.jpg, the contact page's contact.jpg — and bump VERSION.)
 
-const VERSION = 'dxwe-app-9';
+const VERSION = 'dxwe-app-10';
 const SHELL = [
   '/',
   '/app.css',
