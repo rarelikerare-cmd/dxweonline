@@ -1,0 +1,265 @@
+/* ============================================================
+   dxwe — one page, three places: the landing frame, the
+   sequence on its arc, the contact sheet. Moving between them
+   never reloads anything; the photograph changes size and
+   place instead of disappearing.
+
+   The look is concept 11's, value for value, except the ground,
+   which is snow now, and the words: they are strips of embossing
+   tape, black around the photographs, and the landing's DXWE a
+   clear one that turns black under the pointer.
+   ============================================================ */
+
+:root{
+  --ground:#fffafa; /* snow */
+  --ink:#101112;
+  /* The strips the words around the photographs are on, and everything that
+     goes with them, grow with the screen's shorter side: 26px on a small
+     phone, 27 on a phone either way up, 35 on a tablet, 37 on a laptop, 47
+     on a large monitor. Never so big that WORK, at the left, and CONTACT, in
+     the middle, would meet (their strips are 2.78 and 4.42 times as long as
+     they are high, at 0.8 of this, 24px in and 14px apart at least). */
+  --label:min(clamp(22px,20px + 1.9vmin,52px),(50vw - 38px) / 4);
+  --rim:calc(var(--label) + 2px); /* the frame they sit in */
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+  --safe-left:env(safe-area-inset-left,0px); /* a phone on its side: its notch */
+  --safe-right:env(safe-area-inset-right,0px);
+  --ease:cubic-bezier(.23,1,.32,1);
+  --face:"Helvetica Neue",Arial,sans-serif;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;background:var(--ground)}
+body{
+  font-family:var(--face);color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+  overscroll-behavior:none;
+  -webkit-tap-highlight-color:transparent;
+}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+img{display:block}
+:focus-visible{outline:1px dashed rgba(0,0,0,.55);outline-offset:4px}
+
+/* ---------- the lettering: embossing tape ---------- */
+
+/* Every word is a strip of black Dymo tape stuck on the page — js/tape.js
+   models and lights it. The element is the strip as laid out (its height,
+   and a length from its word); the rendering, tilted as it was stuck on and
+   with its shadow, is a canvas centred over it. One that can be pressed
+   lifts a little under the pointer and goes down when it is pressed. */
+.tape{
+  --tape-h:30px;
+  position:relative;display:inline-block;vertical-align:middle;line-height:0;
+  height:var(--tape-h);width:calc(var(--tape-h) * var(--tape-ratio,3));
+}
+.tape:not([data-stamped]){visibility:hidden} /* the words, before they are stamped */
+.tape canvas{position:absolute;pointer-events:none;transition:transform .3s var(--ease),opacity .45s var(--ease)}
+/* A strip that turns into another under the pointer (data-hover) has that
+   one drawn exactly over it, and the two cross. */
+.tape-over{opacity:0}
+.tape[data-hover]:focus-visible .tape-over{opacity:1}
+.tape[data-hover]:focus-visible canvas:not(.tape-over){opacity:0}
+@media (hover:hover){
+  .tape[data-hover]:hover .tape-over{opacity:1}
+  .tape[data-hover]:hover canvas:not(.tape-over){opacity:0}
+}
+.tape-words{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+@media (hover:hover){
+  a.tape:hover canvas,button:hover .tape canvas{transform:translateY(-1px)}
+}
+a.tape:active canvas,button:active .tape canvas{transform:translateY(.5px);transition-duration:.08s}
+
+/* ---------- which place is on screen ---------- */
+
+.landing,.work{position:fixed;inset:0}
+.landing{z-index:20;overflow:hidden}
+.work{z-index:10;background:var(--ground)}
+html:not([data-view="landing"]) .landing,
+html[data-view="landing"] .work{visibility:hidden}
+html[data-view="index"] .carousel,
+html:not([data-view="index"]) .sheet{visibility:hidden;opacity:0}
+
+/* ---------- landing ---------- */
+
+/* The preview (lqip.css) sits on the ground, cover-placed exactly like the
+   photograph, so the first paint is already the picture — only softer. */
+.landing-ground{position:absolute;inset:0;background:#000 50% 50%/cover no-repeat}
+
+/* The photograph is sized to cover by script: its box is the whole image,
+   not the screen, so it can shrink into a frame without re-cropping. */
+.landing-photo,.landing-match{
+  position:absolute;left:0;top:0;max-width:none;
+  opacity:0;pointer-events:none;user-select:none;
+}
+.landing-photo{transition:opacity 1.2s ease}
+.landing-photo.in{opacity:1}
+.landing-match{box-shadow:0 18px 32px -18px rgba(0,0,0,.38)}
+
+/* the stage centres the name; the link is only the name itself, so the
+   hover state belongs to the name and not to the screen. It comes in once
+   its strip has been drawn. */
+.stage{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  padding:0 4vw;
+  opacity:0;transition:opacity .6s ease;
+}
+html.name-ready .stage{opacity:1}
+
+/* The name is the strip above the sequence, in clear vinyl — the photograph
+   shows through it — and black under the pointer. Its letters are as tall as
+   the glass word's were (Archivo's capitals, 0.686 of clamp(34px, 15vw,
+   180px); a strip's letters are 0.384 of its height), and on a low screen
+   the strip is never more than 55% of its height. */
+.enter{--tape-h:min(calc(clamp(34px,15vw,180px) * 1.786),55vh)}
+
+/* ---------- the sequence ---------- */
+
+.carousel{
+  position:absolute;
+  inset:calc(var(--rim) + var(--safe-top)) 0 calc(var(--rim) + var(--safe-bottom));
+  overflow:hidden;touch-action:none;cursor:grab;outline:none;
+}
+.carousel:focus-visible{outline:1px dashed rgba(0,0,0,.3);outline-offset:-6px}
+.carousel.dragging{cursor:grabbing}
+
+/* the arc's origin is the middle of the stage; perspective is set by
+   script from the stage height (the old camera's 40° field of view) */
+.arc{position:absolute;left:50%;top:50%;width:0;height:0;transform-style:preserve-3d}
+
+/* A frame paints its own average colour and 32 px preview until the
+   photograph has arrived and decoded, then the photograph fades in. */
+.card{
+  position:absolute;left:0;top:0;
+  visibility:hidden;cursor:zoom-in;
+  background:var(--c,#111) var(--lqip,none) 50% 50%/cover no-repeat;
+  box-shadow:0 18px 32px -18px rgba(0,0,0,.38);
+  will-change:transform,filter;
+}
+.card img{
+  width:100%;height:100%;object-fit:contain;
+  opacity:0;transition:opacity .35s ease;
+  pointer-events:none;user-select:none;-webkit-user-drag:none;
+}
+.card img.in{opacity:1}
+/* on a phone the photographs are only moved, never blurred (carousel.js) */
+@media (pointer:coarse) and (max-width:520px),(pointer:coarse) and (max-height:520px){.card{will-change:transform}}
+.card.held{visibility:hidden !important}
+
+/* ---------- labels ---------- */
+
+.masthead,.bottom{
+  position:absolute;left:0;right:0;z-index:5;
+  height:var(--rim);padding:0 calc(var(--rim) + var(--safe-right)) 0 calc(var(--rim) + var(--safe-left));
+  display:flex;align-items:center;justify-content:center;
+  pointer-events:none;
+}
+.masthead{top:var(--safe-top)}
+.bottom{bottom:var(--safe-bottom)}
+.masthead a,.bottom a{pointer-events:auto}
+
+/* the same tape for every word around the photographs: the name, and a size
+   down the two words below it */
+.wordmark{--tape-h:var(--label)}
+.label{--tape-h:calc(var(--label) * .8)}
+/* stuck on by hand, in from the edge: the name at the top, and the two at the
+   bottom just as far in from theirs */
+.masthead .tape{translate:0 calc(var(--label) * .36)}
+.bottom .tape{translate:0 calc(var(--label) * -.26)}
+.label{transition:opacity .25s var(--ease)}
+.index-link{position:absolute;left:calc(var(--rim) + var(--safe-left))}
+html[data-view="index"] .index-link{opacity:.5}
+
+/* ---------- the contact sheet ---------- */
+
+.sheet{
+  position:absolute;
+  inset:calc(var(--rim) + var(--safe-top)) 0 calc(var(--rim) + var(--safe-bottom));
+  overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;
+  touch-action:pan-y;
+  display:flex;flex-direction:column;
+  padding:clamp(28px,7vh,72px) clamp(20px,7vw,112px);
+}
+.sheet::-webkit-scrollbar{display:none}
+.sheet-grid{
+  margin:auto 0; /* centred when it fits, scrolls from the top when it does not */
+  display:grid;align-items:start;
+  grid-template-columns:repeat(auto-fill,minmax(clamp(92px,9.5vw,158px),1fr));
+  gap:clamp(10px,1.3vw,18px);
+}
+.thumb{
+  display:block;width:100%;
+  background:var(--c,#111) var(--lqip,none) 50% 50%/cover no-repeat;
+  opacity:.6;transition:opacity .3s var(--ease);
+}
+.thumb img{width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .3s ease}
+.thumb img.in{opacity:1}
+.thumb.current,.thumb:focus-visible{opacity:1}
+@media (hover:hover){.thumb:hover{opacity:1}}
+.thumb.held{visibility:hidden}
+
+/* a thumbnail or the landing photograph in flight between places */
+.ghost{position:absolute;left:0;top:0;z-index:4;pointer-events:none;box-shadow:0 18px 32px -18px rgba(0,0,0,.38)}
+
+/* ---------- one photograph, open ---------- */
+
+/* Glass, not a sheet over it: the sequence stays visible underneath, pushed
+   out of focus and frosted pale, with a fine grain over the whole plate so
+   the blur does not read as plastic. */
+.viewer{
+  position:fixed;inset:0;z-index:60;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:calc(var(--label) * .39);
+  visibility:hidden;cursor:zoom-out;touch-action:none;
+}
+.viewer.open{visibility:visible}
+.viewer-glass{
+  position:absolute;inset:0;
+  background:rgba(255,250,250,.55);
+  backdrop-filter:blur(16px) saturate(1.1);
+  -webkit-backdrop-filter:blur(16px) saturate(1.1);
+}
+.viewer-glass::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  opacity:.16;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:180px 180px;
+}
+.viewer-photo{
+  position:relative;z-index:1;max-width:none;
+  cursor:default;transform-origin:0 0;
+  box-shadow:0 20px 70px rgba(0,0,0,.2);
+  user-select:none;-webkit-user-drag:none;
+}
+.viewer-photo.zoomed{cursor:grab}
+.viewer-meta{position:relative;z-index:1;--tape-h:max(20px,calc(var(--label) * .6))}
+/* the buttons are short pieces of tape, sized with the words but never too
+   small to read on a phone; the button around each is bigger than its tape,
+   so it is easy to hit */
+.lb-nav,.lb-close{
+  position:absolute;z-index:2;
+  display:flex;align-items:center;justify-content:center;
+}
+.lb-nav .tape,.lb-close .tape{--tape-h:max(26px,calc(var(--label) * .83))}
+.lb-nav{top:50%;transform:translateY(-50%);width:max(48px,calc(var(--label) * 1.75));height:max(48px,calc(var(--label) * 1.75))}
+.lb-prev{left:calc(clamp(2px,2vw,26px) + var(--safe-left))}
+.lb-next{right:calc(clamp(2px,2vw,26px) + var(--safe-right))}
+.lb-close{
+  top:calc(var(--label) * .33 + var(--safe-top));right:calc(clamp(2px,2vw,26px) + var(--safe-right));
+  width:max(48px,calc(var(--label) * 1.55));height:max(48px,calc(var(--label) * 1.55));
+}
+
+/* on a touch screen the photograph is swiped, so the arrows only get in its way */
+@media (hover:none) and (pointer:coarse){.lb-nav{display:none}}
+
+/* ---------- small screens ---------- */
+
+@media (max-width:600px){
+  .masthead,.bottom{padding:0 calc(24px + var(--safe-right)) 0 calc(24px + var(--safe-left))}
+  .index-link{left:calc(24px + var(--safe-left))}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .landing-photo,.stage,.card img,.thumb,.thumb img,.label,.tape canvas{transition:none}
+}

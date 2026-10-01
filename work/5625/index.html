@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en" data-view="landing">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>dxwe</title>
+<meta name="description" content="Photographs by dxwe.">
+<meta name="theme-color" content="#fffafa">
+<meta property="og:site_name" content="dxwe">
+<meta property="og:title" content="dxwe">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://dxwe.online/web/IMG_5625.JPG">
+<meta property="og:url" content="https://dxwe.online/work/5625/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="dxwe">
+<script>
+/* Decide the place before anything paints: a deep link must not flash the
+   landing, and only the landing needs its photograph at top priority. */
+(() => {
+  const p = location.pathname.replace(/\/index\.html$/, '/').replace(/\.html$/, '').replace(/\/+$/, '');
+  const view = /^\/work(\/|$)/.test(p) ? 'work' : p === '/index' ? 'index' : 'landing';
+  document.documentElement.dataset.view = view;
+  if (view === 'landing') {
+    const l = document.createElement('link');
+    l.rel = 'preload'; l.as = 'image'; l.href = '/background/landing.jpg'; l.fetchPriority = 'high';
+    document.head.append(l);
+  }
+})();
+/* The strips of tape the words are on are drawn in the background, by
+   js/tape-worker.js: its two helpers start now (js/tape.js takes them over),
+   so their code arrives with the page's instead of after it. */
+try {
+  window.tapeHelpers = {};
+  for (const kind of ['glass', 'black']) {
+    const helper = new Worker('/js/tape-worker.js', {type: 'module'});
+    helper.addEventListener('error', () => (helper.failed = true));
+    window.tapeHelpers[kind] = helper;
+  }
+} catch {}
+</script>
+<link rel="stylesheet" href="/app.css">
+<link rel="stylesheet" href="/lqip.css">
+<!-- every module the page is made of, asked for at once rather than one
+     after another as each is read -->
+<link rel="modulepreload" href="/js/tape.js">
+<link rel="modulepreload" href="/js/tape-model.js">
+<link rel="modulepreload" href="/js/carousel.js">
+<link rel="modulepreload" href="/js/viewer.js">
+<link rel="modulepreload" href="/js/sheet.js">
+<link rel="modulepreload" href="/js/media.js">
+<link rel="modulepreload" href="/js/motion.js">
+<script type="module" src="/app.js"></script>
+</head>
+<body>
+
+<!-- one photograph, one name, one screen -->
+<section class="landing" id="landing" aria-label="dxwe">
+  <div class="landing-ground"></div>
+  <img class="landing-photo" id="landingPhoto" width="2600" height="1749" alt="" decoding="async">
+  <img class="landing-match" id="landingMatch" alt="" decoding="async" aria-hidden="true">
+  <div class="stage">
+    <a class="enter tape" id="enter" href="/work/" data-route aria-label="Enter the work" data-tilt="-1.3" data-vinyl="glass" data-hover="black">DXWE</a>
+  </div>
+</section>
+
+<!-- the words around the photographs are strips of embossing tape: the
+     text in each .tape is what js/tape.js stamps -->
+
+<!-- the sequence, and its contact sheet -->
+<section class="work" id="work" aria-label="Photographs">
+  <main class="carousel" id="carousel" tabindex="0" aria-roledescription="carousel" aria-label="Photographs">
+    <div class="arc" id="arc"></div>
+  </main>
+  <div class="sheet" id="sheet" aria-label="Index">
+    <div class="sheet-grid" id="sheetGrid"></div>
+  </div>
+  <header class="masthead">
+    <a class="wordmark tape" id="wordmark" href="/" data-route data-tilt="-1.3" data-vinyl="black">DXWE</a>
+  </header>
+  <nav class="bottom" aria-label="Site">
+    <a class="label tape index-link" id="indexLink" href="/index/" data-route data-tilt="1.7" data-vinyl="black">WORK</a>
+    <a class="label tape contact" href="https://www.instagram.com/_dxwe/" target="_blank" rel="noopener" data-tilt="-0.8" data-vinyl="black">CONTACT</a>
+  </nav>
+</section>
+
+<!-- one photograph, open -->
+<div class="viewer" id="viewer" role="dialog" aria-modal="true" aria-label="Photograph">
+  <div class="viewer-glass" id="viewerGlass"></div>
+  <button class="lb-close chrome" id="lbClose" aria-label="Close"><span class="tape" data-tilt="-2.2" data-vinyl="black">&times;</span></button>
+  <button class="lb-nav lb-prev chrome" id="lbPrev" aria-label="Previous"><span class="tape" data-tilt="1.6" data-vinyl="black">&larr;</span></button>
+  <img class="viewer-photo" id="viewerPhoto" alt="" draggable="false">
+  <p class="viewer-meta chrome tape" id="viewerMeta" data-tilt="1.1" data-vinyl="black"></p>
+  <button class="lb-nav lb-next chrome" id="lbNext" aria-label="Next"><span class="tape" data-tilt="-1.4" data-vinyl="black">&rarr;</span></button>
+</div>
+
+</body>
+</html>
