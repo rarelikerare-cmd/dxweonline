@@ -1,13 +1,15 @@
 // dxwe — the app.
 //
-// One page, three places — the landing (/), the sequence (/work) and the
-// contact sheet (/index) — and one photograph open (/work/6676). Every place
-// has an address, the back button walks between them, and a photograph is
-// carried from one place into the next instead of being loaded again.
+// One page, four places — the landing (/), the sequence (/work), the contact
+// sheet (/index) and the contact page (/contact, opened in a tab of its own) —
+// and one photograph open (/work/6676). Every place has an address, the back
+// button walks between them, and a photograph is carried from one place into
+// the next instead of being loaded again.
 
 import {Carousel} from './js/carousel.js';
 import {Viewer} from './js/viewer.js';
 import {Sheet} from './js/sheet.js';
+import {Contact} from './js/contact.js';
 import {stampAll, drawn} from './js/tape.js';
 import {settle, wait, idle} from './js/media.js';
 import {GLIDE, reduced, together, release, onto, fade} from './js/motion.js';
@@ -21,6 +23,8 @@ const match = $('landingMatch');
 const work = $('work');
 const carouselEl = $('carousel');
 const sheetEl = $('sheet');
+const contactEl = $('contact');
+const contactLink = $('contactLink');
 const masthead = work.querySelector('.masthead');
 const bottom = work.querySelector('.bottom');
 const labels = [masthead, bottom];
@@ -64,10 +68,26 @@ const loadLanding = () =>
   })());
 if (html.dataset.view === 'landing') loadLanding();
 
+// ---------- the contact page ----------
+
+// CONTACT opens it in a tab of its own. There its photograph is the first
+// thing fetched; anywhere else it is only fetched in the background — a while
+// after the sequence's own, or at once when the pointer reaches for CONTACT —
+// so that tab finds it on the device.
+const contact = new Contact(contactEl);
+if (html.dataset.view === 'contact') contact.load(true);
+for (const type of ['pointerenter', 'focus']) contactLink.addEventListener(type, () => contact.prefetch(), {once: true});
+let prefetching = null;
+const prefetchContact = () => (prefetching ??= wait(3000).then(() => idle(() => contact.prefetch())));
+
 // ---------- the sequence ----------
 
-const {frames} = await fetch('/sequence.json').then(r => r.json());
+const sequence = await fetch('/sequence.json').then(r => r.json());
+const {frames} = sequence;
 const indexOf = id => frames.findIndex(f => f.id === id);
+// The landing photograph is a print of the first frame, so the way in and out
+// can turn one into the other — only while that is so (tools/sequence.mjs).
+const continues = frames[0]?.id === sequence.landing?.match;
 let held = -1; // the frame whose photograph is open
 let remembered = -1;
 
@@ -99,10 +119,12 @@ function parse(path) {
   if (p === '/') return {view: 'landing'};
   if (p === '/work') return {view: 'work'};
   if (p === '/index') return {view: 'index'};
+  if (p === '/contact') return {view: 'contact'};
   const m = p.match(/^\/work\/([a-z0-9-]+)$/i);
   return m && indexOf(m[1].toLowerCase()) >= 0 ? {view: 'work', id: m[1].toLowerCase()} : null;
 }
-const address = r => (r.view === 'landing' ? '/' : r.view === 'index' ? '/index/' : r.id ? `/work/${r.id}/` : '/work/');
+const address = r =>
+  r.view === 'landing' ? '/' : r.view === 'index' ? '/index/' : r.view === 'contact' ? '/contact/' : r.id ? `/work/${r.id}/` : '/work/';
 
 let here = {view: null}; // what is on screen
 let wanted = null;
@@ -141,6 +163,7 @@ function arrive(route, options = {}) {
     }
     here = to;
     if (to.view === 'work' && !to.id) remember(carousel.current());
+    if (to.view === 'work' || to.view === 'index') prefetchContact();
   });
 }
 
@@ -166,7 +189,9 @@ async function travel(from, to, o) {
 async function first(to, i) {
   html.dataset.view = to.view;
   if (to.view === 'landing') return; // already on screen, arriving on its own
-  carousel.live = true;
+  // the contact page's own photograph first; the sequence's once it is there
+  if (to.view === 'contact') contact.load(true).then(() => idle(liven));
+  else carousel.live = true;
   const at = i >= 0 ? i : Number.isInteger(history.state?.frame) ? history.state.frame : 0;
   carousel.set(at);
   remembered = at;
@@ -175,7 +200,8 @@ async function first(to, i) {
     sheet.fill();
     sheet.mark(at);
     moves.push(fade(sheetEl, 0, 1, {duration: 420}));
-  } else moves.push(fade(carouselEl, 0, 1, {duration: 420}));
+  } else if (to.view === 'contact') moves.push(fade(contactEl, 0, 1, {duration: 420}), ...contact.reveal());
+  else moves.push(fade(carouselEl, 0, 1, {duration: 420}));
   await Promise.all([together(moves).then(() => release(moves)), i >= 0 && lift(i, {plain: true})]);
   idle(loadLanding); // for the way home
 }
@@ -199,7 +225,7 @@ const prime = () =>
 async function enter(at) {
   await prime();
   carousel.set(carousel.nearest(at, 0));
-  if (at !== 0 || reduced.matches || !photo.classList.contains('in')) return swap('work');
+  if (at !== 0 || !continues || reduced.matches || !photo.classList.contains('in')) return swap('work');
   const card = carousel.cards[0];
   const [, whole] = await Promise.all([Promise.race([card.ready, wait(1500)]), Promise.race([drawn(name).then(() => true), wait(1500)])]);
   const rect = carousel.rect(0), box = boxOf(photo);
@@ -246,7 +272,7 @@ async function enter(at) {
 
 async function home() {
   const [, whole] = await Promise.all([Promise.race([loadLanding(), wait(1500)]), Promise.race([drawn(name).then(() => true), wait(1500)])]);
-  if (carousel.current() !== 0 || reduced.matches || !photo.classList.contains('in')) return swap('landing');
+  if (carousel.current() !== 0 || !continues || reduced.matches || !photo.classList.contains('in')) return swap('landing');
   carousel.set(carousel.nearest(0));
   const card = carousel.cards[0];
   const rect = carousel.rect(0), box = boxOf(photo);
@@ -284,13 +310,22 @@ async function home() {
 
 // ---------- every other change of place: a plain crossfade ----------
 
-const layerOf = view => (view === 'landing' ? landing : view === 'index' ? sheetEl : carouselEl);
+const layerOf = view => (view === 'landing' ? landing : view === 'index' ? sheetEl : view === 'contact' ? contactEl : carouselEl);
+
+// The sequence starts fetching its photographs, nearest first — on the
+// contact page only once that page's own photograph is there.
+function liven() {
+  if (carousel.live) return;
+  carousel.live = true;
+  carousel.wake();
+}
 
 async function swap(view) {
   const from = html.dataset.view;
   if (from === view) return;
   const out = layerOf(from), into = layerOf(view);
-  if (view !== 'landing') carousel.live = true;
+  if (view === 'contact') contact.load(true).then(() => idle(liven));
+  else if (view !== 'landing') liven();
   if (view === 'index') {
     sheet.fill();
     sheet.mark(carousel.current());
@@ -298,6 +333,7 @@ async function swap(view) {
   for (const el of [out, into, work]) el.style.visibility = 'visible';
   html.dataset.view = view;
   const moves = [fade(out, 1, 0, {duration: 320}), fade(into, 0, 1, {duration: 420, delay: 100})];
+  if (view === 'contact') moves.push(...contact.reveal(100));
   if (from === 'landing') moves.push(...labels.map(l => fade(l, 0, 1, {duration: 380, delay: 200})));
   if (view === 'landing') moves.push(...labels.map(l => fade(l, 1, 0, {duration: 220})));
   await together(moves);
@@ -410,11 +446,15 @@ addEventListener('keydown', e => {
 });
 
 document.addEventListener('click', e => {
+  if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  // CONTACT opens the contact page in a tab of its own — not once more from that page
+  if (e.target.closest('a') === contactLink && here.view === 'contact') return e.preventDefault();
   const a = e.target.closest('a[data-route]');
-  if (!a || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  if (!a) return;
   e.preventDefault();
   const to = a.getAttribute('href');
   if (parse(to)?.view === 'index' && here.view === 'index') return leave(); // WORK again: back to the sequence
+  if (parse(to)?.view === 'index' && here.view === 'contact') return navigate('/work'); // WORK there: the sequence
   navigate(to);
 });
 

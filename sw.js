@@ -3,9 +3,10 @@
 //
 // Code and data go to the network first, so an edit is live on the next
 // load; photographs come from the cache first — a file under the same name
-// never changes. (Replace a photograph under the same name and bump VERSION.)
+// never changes. (Replace a photograph under the same name — the landing's
+// landing.jpg, the contact page's contact.jpg — and bump VERSION.)
 
-const VERSION = 'dxwe-app-8';
+const VERSION = 'dxwe-app-9';
 const SHELL = [
   '/',
   '/app.css',
@@ -14,6 +15,7 @@ const SHELL = [
   '/js/carousel.js',
   '/js/viewer.js',
   '/js/sheet.js',
+  '/js/contact.js',
   '/js/media.js',
   '/js/motion.js',
   '/js/tape.js',

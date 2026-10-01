@@ -34,7 +34,7 @@
 // The strips a device has drawn are kept on it under this name (see
 // js/tape-worker.js). The live build writes this file's own hash here, so a
 // change to how a strip looks is never covered up by one drawn before it.
-export const MODEL = '9879c9eef751';
+export const MODEL = '701e5b04707b';
 
 // ---------- the tape, in millimetres ----------
 
@@ -167,6 +167,9 @@ const LETTERS = {
   '?': [58, 'M2 20C4 7 14 0 28 0C46 0 58 10 58 24C58 38 48 44 38 50C32 54 29 58 29 66M29 100h.01'],
   '#': [66, 'M20 6L14 94M50 6L44 94M4 34H66M0 66H62'],
   _: [70, 'M0 114H70'],
+  // Instagram's glyph — the rounded frame, the lens, the flash — half again
+  // as tall as a letter, or the die's stroke would run its three parts together
+  '◎': [134, 'M35 -17H99A35 35 0 0 1 134 18V82A35 35 0 0 1 99 117H35A35 35 0 0 1 0 82V18A35 35 0 0 1 35 -17ZM67 21A29 29 0 0 1 96 50A29 29 0 0 1 67 79A29 29 0 0 1 38 50A29 29 0 0 1 67 21ZM106 11h.01'],
 };
 
 // ---------- the dies ----------

@@ -9,8 +9,8 @@
 <meta property="og:site_name" content="dxwe">
 <meta property="og:title" content="dxwe">
 <meta property="og:type" content="website">
-<meta property="og:image" content="https://dxwe.online/web/IMG_6675.JPG">
-<meta property="og:url" content="https://dxwe.online/work/6675/">
+<meta property="og:image" content="https://dxwe.online/web/contact.jpg">
+<meta property="og:url" content="https://dxwe.online/contact/">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
@@ -21,15 +21,27 @@
 <meta name="apple-mobile-web-app-title" content="dxwe">
 <script>
 /* Decide the place before anything paints: a deep link must not flash the
-   landing, and only the landing needs its photograph at top priority. */
+   landing, and only the landing needs its photograph at top priority — and
+   the contact page, which opens in a tab of its own, its own. */
 (() => {
   const p = location.pathname.replace(/\/index\.html$/, '/').replace(/\.html$/, '').replace(/\/+$/, '');
-  const view = /^\/work(\/|$)/.test(p) ? 'work' : p === '/index' ? 'index' : 'landing';
+  const view = /^\/work(\/|$)/.test(p) ? 'work' : p === '/index' ? 'index' : p === '/contact' ? 'contact' : 'landing';
   document.documentElement.dataset.view = view;
-  if (view === 'landing') {
+  const preload = a => {
     const l = document.createElement('link');
-    l.rel = 'preload'; l.as = 'image'; l.href = '/background/landing.jpg'; l.fetchPriority = 'high';
+    l.rel = 'preload'; l.as = 'image'; l.fetchPriority = 'high';
+    Object.assign(l, a);
     document.head.append(l);
+  };
+  if (view === 'landing') preload({href: '/background/landing.jpg'});
+  if (view === 'contact') {
+    // about as wide as app.css lays it out — the frame in the middle of the
+    // arc — so that this is the very file the page then asks for
+    const w = innerWidth, label = Math.min(Math.max(22, 20 + Math.min(w, innerHeight) * .019), 52, (w / 2 - 38) / 4);
+    const h = innerHeight - 2 * (label + 2), tall = w < h * .9, low = !tall && h < 520;
+    const width = Math.min(w * (tall ? .84 : low ? .5 : .46), h * (tall ? .6 : low ? .62 : .48) * 1.47);
+    const file = size => `/${size}/contact.jpg`;
+    preload({imageSrcset: `${file('thumb')} 480w, ${file('mid')} 960w` + (width > 400 ? `, ${file('web')} 1800w` : ''), imageSizes: Math.round(width) + 'px'});
   }
 })();
 /* The strips of tape the words are on are drawn in the background, by
@@ -53,6 +65,7 @@ try {
 <link rel="modulepreload" href="/js/carousel.js">
 <link rel="modulepreload" href="/js/viewer.js">
 <link rel="modulepreload" href="/js/sheet.js">
+<link rel="modulepreload" href="/js/contact.js">
 <link rel="modulepreload" href="/js/media.js">
 <link rel="modulepreload" href="/js/motion.js">
 <script type="module" src="/app.js"></script>
@@ -72,7 +85,7 @@ try {
 <!-- the words around the photographs are strips of embossing tape: the
      text in each .tape is what js/tape.js stamps -->
 
-<!-- the sequence, and its contact sheet -->
+<!-- the sequence, its contact sheet, and the contact page -->
 <section class="work" id="work" aria-label="Photographs">
   <main class="carousel" id="carousel" tabindex="0" aria-roledescription="carousel" aria-label="Photographs">
     <div class="arc" id="arc"></div>
@@ -80,12 +93,17 @@ try {
   <div class="sheet" id="sheet" aria-label="Index">
     <div class="sheet-grid" id="sheetGrid"></div>
   </div>
+  <!-- the contact page, in a tab of its own: dxwe, and where to find them -->
+  <section class="contact" id="contact" aria-label="Contact">
+    <div class="contact-photo"><img id="contactPhoto" alt="dxwe" decoding="async" draggable="false"></div>
+    <a class="contact-ig tape" id="contactIg" href="https://www.instagram.com/_dxwe/" target="_blank" rel="noopener" aria-label="Instagram: _dxwe" data-tilt="1.2" data-vinyl="black">◎ _DXWE</a>
+  </section>
   <header class="masthead">
     <a class="wordmark tape" id="wordmark" href="/" data-route data-tilt="-1.3" data-vinyl="black">DXWE</a>
   </header>
   <nav class="bottom" aria-label="Site">
     <a class="label tape index-link" id="indexLink" href="/index/" data-route data-tilt="1.7" data-vinyl="black">WORK</a>
-    <a class="label tape contact" href="https://www.instagram.com/_dxwe/" target="_blank" rel="noopener" data-tilt="-0.8" data-vinyl="black">CONTACT</a>
+    <a class="label tape contact-link" id="contactLink" href="/contact/" target="_blank" rel="noopener" data-tilt="-0.8" data-vinyl="black">CONTACT</a>
   </nav>
 </section>
 
