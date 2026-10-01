@@ -5,8 +5,13 @@
 // load; photographs come from the cache first — a file under the same name
 // never changes. (Replace a photograph under the same name — the landing's
 // landing.jpg, the contact page's contact.jpg — and bump VERSION.)
+//
+// Whatever goes into the cache is asked of the server, never taken from the
+// browser's own copy: GitHub Pages lets the browser keep a file ten minutes
+// without asking, so a new VERSION filled from there could keep the
+// photograph it replaces. The server answers "unchanged" cheaply.
 
-const VERSION = 'dxwe-app-10';
+const VERSION = 'dxwe-app-11';
 const SHELL = [
   '/',
   '/app.css',
@@ -24,9 +29,14 @@ const SHELL = [
   '/sequence.json',
   '/site.webmanifest',
 ];
+const asked = {cache: 'no-cache'}; // revalidated with the server, every time
 
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(VERSION).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting()));
+  event.waitUntil(
+    caches.open(VERSION)
+      .then(cache => cache.addAll(SHELL.map(url => new Request(url, asked))))
+      .then(() => self.skipWaiting()),
+  );
 });
 
 self.addEventListener('activate', event => {
@@ -57,7 +67,7 @@ async function kept(request) {
   const cache = await caches.open(VERSION);
   const hit = await cache.match(request);
   if (hit) return hit;
-  const response = await fetch(request);
+  const response = await fetch(request, asked);
   if (response.ok) cache.put(request, response.clone());
   return response;
 }
@@ -65,7 +75,7 @@ async function kept(request) {
 async function fresh(request, key = request) {
   const cache = await caches.open(VERSION);
   try {
-    const response = await fetch(request);
+    const response = await fetch(request, asked);
     if (response.ok) cache.put(key, response.clone());
     return response;
   } catch {
