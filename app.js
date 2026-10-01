@@ -1,8 +1,8 @@
 // dxwe — the app.
 //
-// One page, four places — the landing (/), the sequence (/work), the contact
-// sheet (/index) and the contact page (/contact, opened in a tab of its own) —
-// and one photograph open (/work/6676). Every place has an address, the back
+// One page, four places — the landing (/), the sequence (/work) and its two
+// panels, the contact sheet (/index) and the contact panel (/contact) — and
+// one photograph open (/work/6676). Every place has an address, the back
 // button walks between them, and a photograph is carried from one place into
 // the next instead of being loaded again.
 
@@ -68,17 +68,17 @@ const loadLanding = () =>
   })());
 if (html.dataset.view === 'landing') loadLanding();
 
-// ---------- the contact page ----------
+// ---------- the contact panel ----------
 
-// CONTACT opens it in a tab of its own. There its photograph is the first
-// thing fetched; anywhere else it is only fetched in the background — a while
-// after the sequence's own, or at once when the pointer reaches for CONTACT —
-// so that tab finds it on the device.
+// CONTACT opens it the way WORK opens the contact sheet, so it must not have
+// to fetch anything then: its photograph is fetched and decoded in the
+// background — a while after the sequence's own, or at once when the pointer
+// reaches for CONTACT. A visitor arriving straight on /contact gets it first.
 const contact = new Contact(contactEl);
 if (html.dataset.view === 'contact') contact.load(true);
-for (const type of ['pointerenter', 'focus']) contactLink.addEventListener(type, () => contact.prefetch(), {once: true});
-let prefetching = null;
-const prefetchContact = () => (prefetching ??= wait(3000).then(() => idle(() => contact.prefetch())));
+for (const type of ['pointerenter', 'focus']) contactLink.addEventListener(type, () => contact.load(), {once: true});
+let readying = null;
+const readyContact = () => (readying ??= wait(3000).then(() => idle(() => contact.load())));
 
 // ---------- the sequence ----------
 
@@ -139,9 +139,9 @@ function navigate(path, options = {}) {
   arrive(route, options);
 }
 
-// Back out of the open photograph or the contact sheet. When the page
-// before is ours the real back button is used, so it stays honest; a
-// visitor who arrived straight on a photograph lands on the sequence.
+// Back out of the open photograph or a panel. When the page before is ours
+// the real back button is used, so it stays honest; a visitor who arrived
+// straight on a photograph or a panel lands on the sequence.
 function leave() {
   if (history.state?.app) history.back();
   else navigate('/work', {replace: true});
@@ -163,7 +163,7 @@ function arrive(route, options = {}) {
     }
     here = to;
     if (to.view === 'work' && !to.id) remember(carousel.current());
-    if (to.view === 'work' || to.view === 'index') prefetchContact();
+    if (to.view === 'work' || to.view === 'index') readyContact();
   });
 }
 
@@ -180,6 +180,7 @@ async function travel(from, to, o) {
     else if (from.view === 'work' && to.view === 'landing') await home();
     else if (from.view === 'work' && to.view === 'index') await toSheet();
     else if (from.view === 'index' && to.view === 'work') await fromSheet(o.pick ?? -1);
+    else if (from.view === 'work' && to.view === 'contact') await toContact();
     else await swap(to.view);
   }
   if (i >= 0) await lift(i);
@@ -189,7 +190,7 @@ async function travel(from, to, o) {
 async function first(to, i) {
   html.dataset.view = to.view;
   if (to.view === 'landing') return; // already on screen, arriving on its own
-  // the contact page's own photograph first; the sequence's once it is there
+  // arriving on the contact panel: its photograph first, the sequence's after
   if (to.view === 'contact') contact.load(true).then(() => idle(liven));
   else carousel.live = true;
   const at = i >= 0 ? i : Number.isInteger(history.state?.frame) ? history.state.frame : 0;
@@ -312,8 +313,8 @@ async function home() {
 
 const layerOf = view => (view === 'landing' ? landing : view === 'index' ? sheetEl : view === 'contact' ? contactEl : carouselEl);
 
-// The sequence starts fetching its photographs, nearest first — on the
-// contact page only once that page's own photograph is there.
+// The sequence starts fetching its photographs, nearest first — arriving on
+// the contact panel, only once that panel's own photograph is there.
 function liven() {
   if (carousel.live) return;
   carousel.live = true;
@@ -391,6 +392,23 @@ async function fromSheet(pick) {
   release(moves);
 }
 
+// ---------- sequence ↔ contact panel ----------
+
+// CONTACT opens its panel the way WORK opens the sheet: the arc goes, and the
+// photograph — on the device already (above) — rises into its place, its
+// strip after it. Were it still on its way, the panel waits a moment for it,
+// then lets its preview stand in. Back to the arc is a crossfade, as from
+// the sheet.
+async function toContact() {
+  await Promise.race([contact.load(true), wait(250)]);
+  carouselEl.style.visibility = 'visible';
+  html.dataset.view = 'contact';
+  const moves = [fade(carouselEl, 1, 0, {duration: 260}), fade(contactEl, 0, 1, {duration: 300, delay: 100}), ...contact.reveal(120)];
+  await together(moves);
+  carouselEl.style.visibility = '';
+  release(moves);
+}
+
 // ---------- a frame opens, and goes back ----------
 
 async function lift(i, {plain = false} = {}) {
@@ -428,7 +446,7 @@ function remember(i) {
 addEventListener('keydown', e => {
   if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
   if (e.key === 'Escape') {
-    if (viewer.isOpen || here.view === 'index') {
+    if (viewer.isOpen || here.view === 'index' || here.view === 'contact') {
       e.preventDefault();
       leave();
     }
@@ -446,15 +464,12 @@ addEventListener('keydown', e => {
 });
 
 document.addEventListener('click', e => {
-  if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-  // CONTACT opens the contact page in a tab of its own — not once more from that page
-  if (e.target.closest('a') === contactLink && here.view === 'contact') return e.preventDefault();
   const a = e.target.closest('a[data-route]');
-  if (!a) return;
+  if (!a || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
   e.preventDefault();
-  const to = a.getAttribute('href');
-  if (parse(to)?.view === 'index' && here.view === 'index') return leave(); // WORK again: back to the sequence
-  if (parse(to)?.view === 'index' && here.view === 'contact') return navigate('/work'); // WORK there: the sequence
+  const to = a.getAttribute('href'), view = parse(to)?.view;
+  // WORK and CONTACT each open their panel, and close it again: back to the sequence
+  if ((view === 'index' || view === 'contact') && here.view === view) return leave();
   navigate(to);
 });
 

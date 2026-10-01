@@ -1,10 +1,10 @@
-// The contact page: one photograph of dxwe, laid out like the frame in the
+// The contact panel: one photograph of dxwe, laid out like the frame in the
 // middle of the arc (app.css), and under it a strip of tape that leads to
-// Instagram. CONTACT opens it in a tab of its own; anywhere else on the site
-// its photograph is only fetched in the background — not shown, not decoded —
-// so that tab finds it already on the device.
+// Instagram. CONTACT opens it the way WORK opens the contact sheet; its
+// photograph is fetched and decoded in the background before that, so the
+// panel comes in whole.
 
-import {url, srcset, settle, PHONE} from './media.js';
+import {srcset, settle, PHONE} from './media.js';
 import {GLIDE, reduced} from './motion.js';
 
 const FILE = 'contact.jpg'; // in /thumb, /mid and /web, like every photograph
@@ -16,7 +16,6 @@ export class Contact {
     this.img = el.querySelector('img');
     this.strip = el.querySelector('.contact-ig');
     this.ready = null;
-    this.fetched = false;
     new ResizeObserver(() => this.#size()).observe(this.frame);
   }
 
@@ -29,23 +28,14 @@ export class Contact {
     if (start || (width > PHONE && !img.srcset.includes('1800w'))) img.srcset = srcset(FILE, width);
   }
 
-  // Show the photograph. Resolves once it is on screen.
+  // Fetch and decode the photograph — in the background, or at once
+  // (`urgent`). Resolves once it can be shown.
   load(urgent = false) {
     if (urgent) this.img.fetchPriority = 'high';
     if (this.ready) return this.ready;
     this.#size(true);
     this.ready = settle(this.img).then(() => this.img.classList.add('in'));
     return this.ready;
-  }
-
-  // Fetch the file the contact page's tab will ask for on this screen,
-  // without showing it here.
-  prefetch() {
-    const width = this.frame.offsetWidth;
-    if (this.fetched || this.ready || !width) return;
-    this.fetched = true;
-    const need = width * Math.min(3, Math.max(1, devicePixelRatio || 1));
-    new Image().src = need <= 480 ? url.thumb(FILE) : need <= 960 || width <= PHONE ? url.mid(FILE) : url.web(FILE);
   }
 
   // The photograph rises a little into its place, and its strip comes after.

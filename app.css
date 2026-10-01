@@ -1,7 +1,7 @@
 /* ============================================================
    dxwe — one page, four places: the landing frame, the
-   sequence on its arc, the contact sheet, and the contact
-   page, which opens in a tab of its own. Moving between them
+   sequence on its arc, and its two panels — the contact sheet
+   (WORK) and the contact panel (CONTACT). Moving between them
    never reloads anything; the photograph changes size and
    place instead of disappearing.
 
@@ -203,12 +203,13 @@ html[data-view="index"] .index-link{opacity:.5}
 @media (hover:hover){.thumb:hover{opacity:1}}
 .thumb.held{visibility:hidden}
 
-/* ---------- the contact page ---------- */
+/* ---------- the contact panel ---------- */
 
-/* CONTACT opens it in a tab of its own: one photograph — dxwe's own — as big
-   as the frame in the middle of the arc and with its shadow, and under it a
-   strip of the same tape with Instagram's glyph pressed in. Its shape and its
-   preview are in lqip.css, so the first paint is already the picture. */
+/* CONTACT opens it as WORK opens the contact sheet: one photograph — dxwe's
+   own — as big as the frame in the middle of the arc and with its shadow, and
+   under it a strip of the same tape with Instagram's glyph pressed in. Its
+   shape and its preview are in lqip.css, so even a visitor arriving straight
+   on /contact/ sees the picture at once. */
 .contact{
   position:absolute;
   inset:calc(var(--rim) + var(--safe-top)) 0 calc(var(--rim) + var(--safe-bottom));

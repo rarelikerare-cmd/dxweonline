@@ -22,7 +22,7 @@
 <script>
 /* Decide the place before anything paints: a deep link must not flash the
    landing, and only the landing needs its photograph at top priority — and
-   the contact page, which opens in a tab of its own, its own. */
+   the contact panel its own, when it is the place a visitor arrives on. */
 (() => {
   const p = location.pathname.replace(/\/index\.html$/, '/').replace(/\.html$/, '').replace(/\/+$/, '');
   const view = /^\/work(\/|$)/.test(p) ? 'work' : p === '/index' ? 'index' : p === '/contact' ? 'contact' : 'landing';
@@ -85,7 +85,7 @@ try {
 <!-- the words around the photographs are strips of embossing tape: the
      text in each .tape is what js/tape.js stamps -->
 
-<!-- the sequence, its contact sheet, and the contact page -->
+<!-- the sequence, and its two panels: the contact sheet and the contact panel -->
 <section class="work" id="work" aria-label="Photographs">
   <main class="carousel" id="carousel" tabindex="0" aria-roledescription="carousel" aria-label="Photographs">
     <div class="arc" id="arc"></div>
@@ -93,7 +93,7 @@ try {
   <div class="sheet" id="sheet" aria-label="Index">
     <div class="sheet-grid" id="sheetGrid"></div>
   </div>
-  <!-- the contact page, in a tab of its own: dxwe, and where to find them -->
+  <!-- the contact panel: dxwe, and where to find them -->
   <section class="contact" id="contact" aria-label="Contact">
     <div class="contact-photo"><img id="contactPhoto" alt="dxwe" decoding="async" draggable="false"></div>
     <a class="contact-ig tape" id="contactIg" href="https://www.instagram.com/_dxwe/" target="_blank" rel="noopener" aria-label="Instagram: _dxwe" data-tilt="1.2" data-vinyl="black">◎ _DXWE</a>
@@ -103,7 +103,7 @@ try {
   </header>
   <nav class="bottom" aria-label="Site">
     <a class="label tape index-link" id="indexLink" href="/index/" data-route data-tilt="1.7" data-vinyl="black">WORK</a>
-    <a class="label tape contact-link" id="contactLink" href="/contact/" target="_blank" rel="noopener" data-tilt="-0.8" data-vinyl="black">CONTACT</a>
+    <a class="label tape contact-link" id="contactLink" href="/contact/" data-route data-tilt="-0.8" data-vinyl="black">CONTACT</a>
   </nav>
 </section>
 
