@@ -7,7 +7,7 @@
 import {srcset, settle, PHONE} from './media.js';
 import {GLIDE, reduced} from './motion.js';
 
-const FILE = 'contact.jpg'; // in /thumb, /mid and /web, like every photograph
+const FILE = 'contact-d5b90786.jpg'; // in /thumb, /mid and /web, like every photograph
 
 export class Contact {
   constructor(el) {

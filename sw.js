@@ -3,15 +3,16 @@
 //
 // Code and data go to the network first, so an edit is live on the next
 // load; photographs come from the cache first — a file under the same name
-// never changes. (Replace a photograph under the same name — the landing's
-// landing.jpg, the contact page's contact.jpg — and bump VERSION.)
+// never changes: the two that do get replaced — the landing's and the
+// contact page's — are published under a name made from their content
+// (build.js), so a new picture is a new file to every cache.
 //
 // Whatever goes into the cache is asked of the server, never taken from the
 // browser's own copy: GitHub Pages lets the browser keep a file ten minutes
 // without asking, so a new VERSION filled from there could keep the
 // photograph it replaces. The server answers "unchanged" cheaply.
 
-const VERSION = 'dxwe-app-12';
+const VERSION = 'dxwe-app-13';
 const SHELL = [
   '/',
   '/app.css',

@@ -33,14 +33,16 @@
     Object.assign(l, a);
     document.head.append(l);
   };
-  if (view === 'landing') preload({href: '/background/landing.jpg'});
+  if (view === 'landing') preload({href: '/background/landing-cf74a570.jpg'});
   if (view === 'contact') {
     // about as wide as app.css lays it out — the frame in the middle of the
-    // arc — so that this is the very file the page then asks for
+    // arc — so that this is the very file the page then asks for; the
+    // photograph's shape is written in by the build (sequence.json)
+    const RATIO = 1.0087;
     const w = innerWidth, label = Math.min(Math.max(22, 20 + Math.min(w, innerHeight) * .019), 52, (w / 2 - 38) / 4);
     const h = innerHeight - 2 * (label + 2), tall = w < h * .9, low = !tall && h < 520;
-    const width = Math.min(w * (tall ? .84 : low ? .5 : .46), h * (tall ? .6 : low ? .62 : .48) * 1.47);
-    const file = size => `/${size}/contact.jpg`;
+    const width = Math.min(w * (tall ? .84 : low ? .5 : .46), h * (tall ? .6 : low ? .62 : .48) * RATIO);
+    const file = size => `/${size}/contact-d5b90786.jpg`;
     preload({imageSrcset: `${file('thumb')} 480w, ${file('mid')} 960w` + (width > 400 ? `, ${file('web')} 1800w` : ''), imageSizes: Math.round(width) + 'px'});
   }
 })();

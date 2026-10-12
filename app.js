@@ -63,7 +63,7 @@ let landingReady = null;
 const loadLanding = () =>
   (landingReady ??= (() => {
     photo.fetchPriority = html.dataset.view === 'landing' ? 'high' : 'low';
-    photo.src = '/background/landing.jpg';
+    photo.src = '/background/landing-cf74a570.jpg';
     return settle(photo).then(() => photo.classList.add('in'));
   })());
 if (html.dataset.view === 'landing') loadLanding();
