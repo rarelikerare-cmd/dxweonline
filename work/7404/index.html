@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en" data-view="landing">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>dxwe</title>
+<meta name="description" content="Photographs by dxwe.">
+<meta name="theme-color" content="#fffafa">
+<meta property="og:site_name" content="dxwe">
+<meta property="og:title" content="dxwe">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://dxwe.online/web/IMG_7404.JPG">
+<meta property="og:url" content="https://dxwe.online/work/7404/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="dxwe">
+<script>
+/* Decide the place before anything paints: a deep link must not flash the
+   landing, and only the landing needs its photograph at top priority — and
+   the contact panel its own, when it is the place a visitor arrives on. */
+(() => {
+  const p = location.pathname.replace(/\/index\.html$/, '/').replace(/\.html$/, '').replace(/\/+$/, '');
+  const view = /^\/work(\/|$)/.test(p) ? 'work' : p === '/index' ? 'index' : p === '/contact' ? 'contact' : 'landing';
+  document.documentElement.dataset.view = view;
+  const preload = a => {
+    const l = document.createElement('link');
+    l.rel = 'preload'; l.as = 'image'; l.fetchPriority = 'high';
+    Object.assign(l, a);
+    document.head.append(l);
+  };
+  if (view === 'landing') preload({href: '/background/landing.jpg'});
+  if (view === 'contact') {
+    // about as wide as app.css lays it out — the frame in the middle of the
+    // arc — so that this is the very file the page then asks for
+    const w = innerWidth, label = Math.min(Math.max(22, 20 + Math.min(w, innerHeight) * .019), 52, (w / 2 - 38) / 4);
+    const h = innerHeight - 2 * (label + 2), tall = w < h * .9, low = !tall && h < 520;
+    const width = Math.min(w * (tall ? .84 : low ? .5 : .46), h * (tall ? .6 : low ? .62 : .48) * 1.47);
+    const file = size => `/${size}/contact.jpg`;
+    preload({imageSrcset: `${file('thumb')} 480w, ${file('mid')} 960w` + (width > 400 ? `, ${file('web')} 1800w` : ''), imageSizes: Math.round(width) + 'px'});
+  }
+})();
+/* The strips of tape the words are on are drawn in the background, by
+   js/tape-worker.js: its two helpers start now (js/tape.js takes them over),
+   so their code arrives with the page's instead of after it. */
+try {
+  window.tapeHelpers = {};
+  for (const kind of ['glass', 'black']) {
+    const helper = new Worker('/js/tape-worker.js', {type: 'module'});
+    helper.addEventListener('error', () => (helper.failed = true));
+    window.tapeHelpers[kind] = helper;
+  }
+} catch {}
+</script>
+<link rel="stylesheet" href="/app.css">
+<link rel="stylesheet" href="/lqip.css">
+<!-- every module the page is made of, asked for at once rather than one
+     after another as each is read -->
+<link rel="modulepreload" href="/js/tape.js">
+<link rel="modulepreload" href="/js/tape-model.js">
+<link rel="modulepreload" href="/js/carousel.js">
+<link rel="modulepreload" href="/js/viewer.js">
+<link rel="modulepreload" href="/js/sheet.js">
+<link rel="modulepreload" href="/js/contact.js">
+<link rel="modulepreload" href="/js/media.js">
+<link rel="modulepreload" href="/js/motion.js">
+<script type="module" src="/app.js"></script>
+</head>
+<body>
+
+<!-- one photograph, one name, one screen -->
+<section class="landing" id="landing" aria-label="dxwe">
+  <div class="landing-ground"></div>
+  <img class="landing-photo" id="landingPhoto" width="2600" height="1749" alt="" decoding="async">
+  <img class="landing-match" id="landingMatch" alt="" decoding="async" aria-hidden="true">
+  <div class="stage">
+    <a class="enter tape" id="enter" href="/work/" data-route aria-label="Enter the work" data-tilt="-1.3" data-vinyl="glass" data-hover="black">DXWE</a>
+  </div>
+</section>
+
+<!-- the words around the photographs are strips of embossing tape: the
+     text in each .tape is what js/tape.js stamps -->
+
+<!-- the sequence, and its two panels: the contact sheet and the contact panel -->
+<section class="work" id="work" aria-label="Photographs">
+  <main class="carousel" id="carousel" tabindex="0" aria-roledescription="carousel" aria-label="Photographs">
+    <div class="arc" id="arc"></div>
+  </main>
+  <div class="sheet" id="sheet" aria-label="Index">
+    <div class="sheet-grid" id="sheetGrid"></div>
+  </div>
+  <!-- the contact panel: dxwe, and where to find them -->
+  <section class="contact" id="contact" aria-label="Contact">
+    <div class="contact-photo"><img id="contactPhoto" alt="dxwe" decoding="async" draggable="false"></div>
+    <a class="contact-ig tape" id="contactIg" href="https://www.instagram.com/_dxwe/" target="_blank" rel="noopener" aria-label="Instagram: _dxwe" data-tilt="1.2" data-vinyl="black">◎ _DXWE</a>
+  </section>
+  <header class="masthead">
+    <a class="wordmark tape" id="wordmark" href="/" data-route data-tilt="-1.3" data-vinyl="black">DXWE</a>
+  </header>
+  <nav class="bottom" aria-label="Site">
+    <a class="label tape index-link" id="indexLink" href="/index/" data-route data-tilt="1.7" data-vinyl="black">WORK</a>
+    <a class="label tape contact-link" id="contactLink" href="/contact/" data-route data-tilt="-0.8" data-vinyl="black">CONTACT</a>
+  </nav>
+</section>
+
+<!-- one photograph, open -->
+<div class="viewer" id="viewer" role="dialog" aria-modal="true" aria-label="Photograph">
+  <div class="viewer-glass" id="viewerGlass"></div>
+  <button class="lb-close chrome" id="lbClose" aria-label="Close"><span class="tape" data-tilt="-2.2" data-vinyl="black">&times;</span></button>
+  <button class="lb-nav lb-prev chrome" id="lbPrev" aria-label="Previous"><span class="tape" data-tilt="1.6" data-vinyl="black">&larr;</span></button>
+  <img class="viewer-photo" id="viewerPhoto" alt="" draggable="false">
+  <p class="viewer-meta chrome tape" id="viewerMeta" data-tilt="1.1" data-vinyl="black"></p>
+  <button class="lb-nav lb-next chrome" id="lbNext" aria-label="Next"><span class="tape" data-tilt="-1.4" data-vinyl="black">&rarr;</span></button>
+</div>
+
+</body>
+</html>
