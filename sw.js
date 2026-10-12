@@ -11,7 +11,7 @@
 // without asking, so a new VERSION filled from there could keep the
 // photograph it replaces. The server answers "unchanged" cheaply.
 
-const VERSION = 'dxwe-app-11';
+const VERSION = 'dxwe-app-12';
 const SHELL = [
   '/',
   '/app.css',
