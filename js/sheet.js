@@ -1,10 +1,11 @@
 // The contact sheet: every frame, small, in running order, in its own shape.
 // No captions. A thumbnail takes you back to that photograph on the arc.
+// Between the order's chapters it pauses — an empty row, nothing written.
 
 import {url, settle} from './media.js';
 
 export class Sheet {
-  constructor(el, grid, frames, {onPick} = {}) {
+  constructor(el, grid, frames, {onPick, breaks = []} = {}) {
     Object.assign(this, {el, grid, frames, onPick});
     this.thumbs = frames.map((frame, i) => {
       const b = document.createElement('button');
@@ -22,7 +23,13 @@ export class Sheet {
       b.append(img);
       return {b, img, frame};
     });
-    grid.append(...this.thumbs.map(t => t.b));
+    grid.append(...this.thumbs.flatMap((t, i) => {
+      if (!breaks.includes(i)) return [t.b];
+      const pause = document.createElement('div');
+      pause.className = 'sheet-break';
+      pause.setAttribute('aria-hidden', 'true');
+      return [pause, t.b];
+    }));
     grid.addEventListener('click', e => {
       const b = e.target.closest('.thumb');
       if (b) this.onPick?.(Number(b.dataset.i));

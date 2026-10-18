@@ -108,7 +108,7 @@ const viewer = new Viewer($('viewer'), frames, {
   onDismiss: () => leave(),
 });
 
-const sheet = new Sheet(sheetEl, $('sheetGrid'), frames, {onPick: i => navigate('/work', {pick: i})});
+const sheet = new Sheet(sheetEl, $('sheetGrid'), frames, {onPick: i => navigate('/work', {pick: i}), breaks: sequence.breaks ?? []});
 
 // ---------- places and addresses ----------
 

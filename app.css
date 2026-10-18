@@ -177,13 +177,19 @@ html[data-view="index"] .index-link{opacity:.5}
 
 /* ---------- the contact sheet ---------- */
 
+/* It scrolls, so its edges stay clear of the words around it: DXWE is stuck
+   on .36 of a label below its band and WORK and CONTACT .26 above theirs
+   (with their shadows and their tilt, a little more), and the thumbnails
+   fade out just before them instead of sliding underneath. */
 .sheet{
   position:absolute;
-  inset:calc(var(--rim) + var(--safe-top)) 0 calc(var(--rim) + var(--safe-bottom));
+  inset:calc(var(--rim) + var(--safe-top) + var(--label) * .6 + 4px) 0 calc(var(--rim) + var(--safe-bottom) + var(--label) * .36 + 4px);
   overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;
   touch-action:pan-y;
   display:flex;flex-direction:column;
-  padding:clamp(28px,7vh,72px) clamp(20px,7vw,112px);
+  padding:clamp(20px,6vh,60px) clamp(20px,7vw,112px);
+  -webkit-mask-image:linear-gradient(transparent,#000 22px,#000 calc(100% - 22px),transparent);
+  mask-image:linear-gradient(transparent,#000 22px,#000 calc(100% - 22px),transparent);
 }
 .sheet::-webkit-scrollbar{display:none}
 .sheet-grid{
@@ -192,6 +198,9 @@ html[data-view="index"] .index-link{opacity:.5}
   grid-template-columns:repeat(auto-fill,minmax(clamp(92px,9.5vw,158px),1fr));
   gap:clamp(10px,1.3vw,18px);
 }
+/* a pause between the order's chapters: a full row of nothing, about two
+   and a half gaps deep with the gaps either side of it */
+.sheet-break{grid-column:1/-1;height:calc(clamp(10px,1.3vw,18px) * .5)}
 .thumb{
   display:block;width:100%;
   background:var(--c,#111) var(--lqip,none) 50% 50%/cover no-repeat;
